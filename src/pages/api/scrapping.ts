@@ -1,34 +1,20 @@
-// Next.js API route support: https://nextjs.org/docs/api-routes/introduction
-import type { NextApiRequest, NextApiResponse } from 'next'
-import puppeteer from 'puppeteer'
-import { load } from 'cheerio'
+import { JSDOM } from 'jsdom'
+import { NextApiRequest, NextApiResponse } from 'next'
+const getDownloads = async (req: NextApiRequest, res: NextApiResponse) => {
+  // Receive the input from the req body, parse from json
+  // const body = JSON.parse(req.body)
+  // const { input } = body
 
-const testUrl = 'https://www.kabum.com.br/hardware/processadores'
+  const response = await fetch(`https://www.npmjs.com/package/react`)
+  const html = await response.text()
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  const method = req.method
-  if (method === 'GET') {
-    const browser = await puppeteer.launch();
-    const page = await browser.newPage()
-    await page.goto(testUrl)
-    const html = await page.content()
+  const dom = new JSDOM(html)
+  const document = dom.window.document
+  
+  const downloads = document.querySelector( '._9ba9a726')?.textContent
 
-    const $ = load(html)
-
-    const products: any[] = []
-
-    $('.productCard').each((i, el) => {
-      const title = $('.nameCard', el).text()
-      const price = $('.priceCard', el).text()
-      const link = 'https://www.kabum.com.br' + $('.htpbqG', el).attr('href')
-      products.push({title, price, link})
-    })
-
-    res.status(200).json(products)
-  } else {
-    res.send('Method not allowed')
-  }
+  // Send downloads back to client
+  res.status(200).json({downloads})
 }
+
+export default getDownloads;
